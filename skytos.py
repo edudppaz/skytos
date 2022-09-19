@@ -3,6 +3,7 @@ import ipaddress
 import time
 import re
 import requests
+import pprint
 from requests.exceptions import HTTPError
 
 
@@ -79,6 +80,16 @@ def fetchAzure(f):
         r"https:\/\/download\.\S*\.json", AZURE_HTTP.text
     ).group()
     AZURE_JSON = basicGET_JSON(AZURE_JSON_URL)
+    TEMP_PREFIXES, AZURE_PREFIXES = [], []
+    for _ in AZURE_JSON["values"]:
+        TEMP_PREFIXES.extend([x for x in _["properties"]["addressPrefixes"]])
+    for prefix in TEMP_PREFIXES:
+        address = ipaddress.ip_network(prefix)
+        if "ipv4" in f and isinstance(address, ipaddress.IPv4Network):
+            AZURE_PREFIXES.append(prefix)
+        elif "ipv6" in f and isinstance(address, ipaddress.IPv6Network):
+            AZURE_PREFIXES.append(prefix)
+    return AZURE_PREFIXES
 
 
 if __name__ == "__main__":
@@ -109,22 +120,28 @@ if __name__ == "__main__":
         def ip_hosts(_):
             return ipaddress.IPv6Network(_)
 
-    aws_count, gcp_count, goog_count = 0, 0, 0
+    aws_count, gcp_count, goog_count, azure_count = 0, 0, 0, 0
 
-    gcp_list = fetchGCP(f)
-    goog_list = fetchGOOG(f)
-    aws_list = fetchAWS(f)
-
-    for _ in gcp_list:
-        gcp_count += ip_hosts(_).num_addresses
-    print(f"Number of GCP addresses: {gcp_count:,}")
-
-    for _ in goog_list:
-        goog_count += ip_hosts(_).num_addresses
-    print(f"Numer of GOOG addresses: {goog_count:,}")
-
-    print(f"Total GOOG (Google backbone/services + GCP): {gcp_count + goog_count:,}")
-
-    for _ in aws_list:
-        aws_count += ip_hosts(_).num_addresses
-    print(f"Total AWS addresses: {aws_count:,}")
+    # Should not fetch from everyone if not needed
+    # gcp_list = fetchGCP(f)
+    # goog_list = fetchGOOG(f)
+    # aws_list = fetchAWS(f)
+    azure_list = fetchAzure(f)
+    #
+    ## Only for specific cases
+    # for _ in gcp_list:
+    #    gcp_count += ip_hosts(_).num_addresses
+    # print(f"Number of GCP addresses: {gcp_count:,}")
+    #
+    # for _ in goog_list:
+    #    goog_count += ip_hosts(_).num_addresses
+    # print(f"Numer of GOOG addresses: {goog_count:,}")
+    #
+    # print(f"Total GOOG (Google backbone/services + GCP): {gcp_count + goog_count:,}")
+    #
+    # for _ in aws_list:
+    #    aws_count += ip_hosts(_).num_addresses
+    # print(f"Total AWS addresses: {aws_count:,}")
+    for _ in azure_list:
+        azure_count += ip_hosts(_).num_addresses
+    print(f"Total Azure addresses: {azure_count:,}")
