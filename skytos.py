@@ -73,6 +73,19 @@ def fetchAWS(f=["all", "ipv4"]):
     return AWS_PREFIXES
 
 
+def fetchOCL(f=["all", "ipv4"]):
+    ORACLE_URL = "https://docs.oracle.com/iaas/tools/public_ip_ranges.json"
+    ORACLE_JSON = basicGET_JSON(ORACLE_URL)
+    ORACLE_PREFIXES = []
+    # Filters the response
+    if "ipv4" in f:
+        # Going through the json and extracting all ipv4 prefixes into a list
+        TEMP_CIDR = [_.get("cidrs") for _ in ORACLE_JSON["regions"]]
+        for _ in TEMP_CIDR:
+            ORACLE_PREFIXES += [cidr.get("cidr") for cidr in _]
+    return ORACLE_PREFIXES
+
+
 def fetchAzure(f):
     AZURE_URL = "https://www.microsoft.com/en-us/download/confirmation.aspx?id=56519"
     AZURE_HTTP = requests.get(AZURE_URL)
@@ -123,25 +136,26 @@ if __name__ == "__main__":
     aws_count, gcp_count, goog_count, azure_count = 0, 0, 0, 0
 
     # Should not fetch from everyone if not needed
-    # gcp_list = fetchGCP(f)
-    # goog_list = fetchGOOG(f)
-    # aws_list = fetchAWS(f)
+    gcp_list = fetchGCP(f)
+    goog_list = fetchGOOG(f)
+    aws_list = fetchAWS(f)
     azure_list = fetchAzure(f)
     #
     ## Only for specific cases
-    # for _ in gcp_list:
-    #    gcp_count += ip_hosts(_).num_addresses
-    # print(f"Number of GCP addresses: {gcp_count:,}")
+    for _ in gcp_list:
+        gcp_count += ip_hosts(_).num_addresses
+    print(f"Number of GCP addresses: {gcp_count:,}")
     #
-    # for _ in goog_list:
-    #    goog_count += ip_hosts(_).num_addresses
-    # print(f"Numer of GOOG addresses: {goog_count:,}")
+    for _ in goog_list:
+        goog_count += ip_hosts(_).num_addresses
+    print(f"Numer of GOOG addresses: {goog_count:,}")
     #
-    # print(f"Total GOOG (Google backbone/services + GCP): {gcp_count + goog_count:,}")
-    #
-    # for _ in aws_list:
-    #    aws_count += ip_hosts(_).num_addresses
-    # print(f"Total AWS addresses: {aws_count:,}")
+    print(f"Total GOOG (Google backbone/services + GCP): {gcp_count + goog_count:,}")
+
+    for _ in aws_list:
+        aws_count += ip_hosts(_).num_addresses
+    print(f"Total AWS addresses: {aws_count:,}")
     for _ in azure_list:
         azure_count += ip_hosts(_).num_addresses
     print(f"Total Azure addresses: {azure_count:,}")
+    print(f"\n Total cloud: {gcp_count + goog_count + aws_count + azure_count:,}")
