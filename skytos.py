@@ -1,11 +1,10 @@
 import argparse
 import ipaddress
 import time
-import re
+#import re
 import requests
-import pprint
 from requests.exceptions import HTTPError
-
+import json
 
 def basicGET_JSON(url: str) -> dict:
     retries = 3
@@ -85,13 +84,14 @@ def fetchOCL(f=["all", "ipv4"]):
             ORACLE_PREFIXES += [cidr.get("cidr") for cidr in _]
     return ORACLE_PREFIXES
 
-
 def fetchAzure(f):
-    AZURE_URL = "https://www.microsoft.com/en-us/download/confirmation.aspx?id=56519"
-    AZURE_HTTP = requests.get(AZURE_URL)
-    AZURE_JSON_URL = re.search(
-        r"https:\/\/download\.\S*\.json", AZURE_HTTP.text
-    ).group()
+    # AZURE_URL = "https://www.microsoft.com/en-us/download/confirmation.aspx?id=56519"
+    # AZURE_HTTP = requests.get(AZURE_URL)
+    # print(AZURE_HTTP.text)
+    # AZURE_JSON_URL = re.search(
+    #     r"https:\/\/download\.\S*\.json", AZURE_HTTP.text
+    # ).group()
+    AZURE_JSON_URL = "https://download.microsoft.com/download/7/1/D/71D86715-5596-4529-9B13-DA13A5DE5B63/ServiceTags_Public_20230529.json"
     AZURE_JSON = basicGET_JSON(AZURE_JSON_URL)
     TEMP_PREFIXES, AZURE_PREFIXES = [], []
     for _ in AZURE_JSON["values"]:
@@ -111,13 +111,23 @@ if __name__ == "__main__":
     )
     exc = parser.add_mutually_exclusive_group(required=True)
     exc.add_argument(
-        "-ipv4_sum",
+        "--ipv4_sum",
         help="Sums all available IPv4 hosts for all providers",
         action="store_true",
     )
     exc.add_argument(
-        "-ipv6_sum",
+        "--ipv6_sum",
         help="Sums all available IPv4 hosts for all providers",
+        action="store_true",
+    )
+    exc.add_argument(
+        "--goog-v4",
+        help="Prints the Google prefixes",
+        action="store_true",
+    )
+    exc.add_argument(
+        "--aws-v4",
+        help="prints the AWS prefixes",
         action="store_true",
     )
     args = parser.parse_args()
@@ -136,26 +146,31 @@ if __name__ == "__main__":
     aws_count, gcp_count, goog_count, azure_count = 0, 0, 0, 0
 
     # Should not fetch from everyone if not needed
-    gcp_list = fetchGCP(f)
-    goog_list = fetchGOOG(f)
-    aws_list = fetchAWS(f)
-    azure_list = fetchAzure(f)
     #
     ## Only for specific cases
-    for _ in gcp_list:
-        gcp_count += ip_hosts(_).num_addresses
-    print(f"Number of GCP addresses: {gcp_count:,}")
-    #
-    for _ in goog_list:
-        goog_count += ip_hosts(_).num_addresses
-    print(f"Numer of GOOG addresses: {goog_count:,}")
-    #
-    print(f"Total GOOG (Google backbone/services + GCP): {gcp_count + goog_count:,}")
+    if args.ipv4_sum or args.ipv6_sum:
+        gcp_list = fetchGCP(f)
+        goog_list = fetchGOOG(f)
+        aws_list = fetchAWS(f)
+        azure_list = fetchAzure(f)
+        for _ in gcp_list:
+            gcp_count += ip_hosts(_).num_addresses
+        print(f"Number of GCP addresses: {gcp_count:,}")
+        #
+        for _ in goog_list:
+            goog_count += ip_hosts(_).num_addresses
+        print(f"Numer of GOOG addresses: {goog_count:,}")
+        #
+        print(f"Total GOOG (Google backbone/services + GCP): {gcp_count + goog_count:,}")
 
-    for _ in aws_list:
-        aws_count += ip_hosts(_).num_addresses
-    print(f"Total AWS addresses: {aws_count:,}")
-    for _ in azure_list:
-        azure_count += ip_hosts(_).num_addresses
-    print(f"Total Azure addresses: {azure_count:,}")
-    print(f"\n Total cloud: {gcp_count + goog_count + aws_count + azure_count:,}")
+        for _ in aws_list:
+            aws_count += ip_hosts(_).num_addresses
+        print(f"Total AWS addresses: {aws_count:,}")
+        for _ in azure_list:
+            azure_count += ip_hosts(_).num_addresses
+        print(f"Total Azure addresses: {azure_count:,}")
+        print(f"\n Total cloud: {gcp_count + goog_count + aws_count + azure_count:,}")
+    if args.goog_v4:
+        print(json.dumps(fetchGOOG("ipv4"), indent=4))
+    if args.aws_v4:
+        print(json.dumps(fetchAWS("ipv4"), indent=4))
