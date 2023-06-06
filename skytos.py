@@ -130,6 +130,11 @@ if __name__ == "__main__":
         help="prints the AWS prefixes",
         action="store_true",
     )
+    exc.add_argument(
+        "--az-v4",
+        help="prints the Azure prefixes",
+        action="store_true",
+    )
     args = parser.parse_args()
     if args.ipv4_sum:
         f = ["ipv4"]
@@ -174,3 +179,5 @@ if __name__ == "__main__":
         print(json.dumps(fetchGOOG("ipv4"), indent=4))
     if args.aws_v4:
         print(json.dumps(fetchAWS("ipv4"), indent=4))
+    if args.az_v4:
+        print(json.dumps(fetchAzure("ipv4"), indent=4))
