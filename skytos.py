@@ -1,7 +1,7 @@
 import argparse
 import ipaddress
 import time
-#import re
+import re
 import requests
 from requests.exceptions import HTTPError
 import json
@@ -85,13 +85,15 @@ def fetchOCL(f=["all", "ipv4"]):
     return ORACLE_PREFIXES
 
 def fetchAzure(f):
-    # AZURE_URL = "https://www.microsoft.com/en-us/download/confirmation.aspx?id=56519"
-    # AZURE_HTTP = requests.get(AZURE_URL)
-    # print(AZURE_HTTP.text)
-    # AZURE_JSON_URL = re.search(
-    #     r"https:\/\/download\.\S*\.json", AZURE_HTTP.text
-    # ).group()
-    AZURE_JSON_URL = "https://download.microsoft.com/download/7/1/D/71D86715-5596-4529-9B13-DA13A5DE5B63/ServiceTags_Public_20230529.json"
+    AZURE_URL = "https://www.microsoft.com/en-us/download/confirmation.aspx?id=56519"
+    # Microsoft doesn't like automated processes fetching the ip addresses
+    # Bypassing the check by changing the User Agent to a web browser
+    AZURE_HEADER = {'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36'}
+    AZURE_HTTP = requests.get(AZURE_URL, headers=AZURE_HEADER)
+    AZURE_JSON_URL = re.search(
+        r"https:\/\/download\.\S*\.json", AZURE_HTTP.text
+    ).group()
     AZURE_JSON = basicGET_JSON(AZURE_JSON_URL)
     TEMP_PREFIXES, AZURE_PREFIXES = [], []
     for _ in AZURE_JSON["values"]:
