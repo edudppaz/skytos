@@ -12,6 +12,6 @@ etc.
 
 # Caveats
 Work in progress. Ugly script.
-For some reason, Microsoft doesnt like an "automated process" fetching the ip addresses, so right now i have hardcoded a URL that microsoft changes constantly. If the script is failing due to a failed request to the microsoft URL, it means that they changed the download URL. THe new one can be found at:
+~~For some reason, Microsoft doesnt like an "automated process" fetching the ip addresses, so right now i have hardcoded a URL that microsoft changes constantly. If the script is failing due to a failed request to the microsoft URL, it means that they changed the download URL. THe new one can be found at~~. Fixed by @GardSethre on #1
 
 https://www.microsoft.com/en-us/download/confirmation.aspx?id=56519
