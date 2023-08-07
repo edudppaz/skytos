@@ -5,7 +5,7 @@ import re
 import requests
 from requests.exceptions import HTTPError
 import json
-
+import datetime
 def basicGET_JSON(url: str) -> dict:
     retries = 3
 
@@ -155,6 +155,9 @@ if __name__ == "__main__":
     # Should not fetch from everyone if not needed
     #
     ## Only for specific cases
+    current_time = datetime.datetime.now()
+    date_format = "%d-%m-%y %H:%M"
+    print(f"Information generated on {current_time.strftime(date_format)}")
     if args.ipv4_sum or args.ipv6_sum:
         gcp_list = fetchGCP(f)
         goog_list = fetchGOOG(f)
